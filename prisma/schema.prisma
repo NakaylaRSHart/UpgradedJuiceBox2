@@ -1,0 +1,37 @@
+// schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Define User model
+model User {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique
+  password  String
+  name      String?
+  location  String?
+  posts     Post[]    @relation("UserPosts")
+}
+
+// Define Post model
+model Post {
+  id        Int       @id @default(autoincrement())
+  author    User      @relation("UserPosts", fields: [authorId], references: [id])
+  authorId  Int
+  title     String
+  content   String
+  tags      Tag[]     @relation("PostTags")
+}
+
+// Define Tag model
+model Tag {
+  id       Int        @id @default(autoincrement())
+  name     String     @unique
+  posts    Post[]     @relation("PostTags")
+}
