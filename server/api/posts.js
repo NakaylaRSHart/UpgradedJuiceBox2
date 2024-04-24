@@ -2,20 +2,31 @@ const express = require('express');
 const postsRouter = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const { requireUser } = require('./utils');
+const { requireUser } = require('./util');
 
 // GET all posts
 postsRouter.get('/', async (req, res, next) => {
   try {
-    const allPosts = await prisma.post.findMany({
-      where: { active: true }, // Filter active posts
-      include: { author: true }, // Include author details
-    });
-    res.json({ posts: allPosts });
+    const allPosts = await prisma.post.findMany();
+    res.send({ posts: allPosts });
   } catch (error) {
     next(error);
   }
 });
+
+//Get post by postId
+postsRouter.get('/:postId', async (req, res, next) => {
+  try {
+    const { postId } = req.params;
+    const getPostById = await prisma.post.findUnique({
+      where: { id: Number(postId) },
+    })
+    res.send(getPostById);
+
+  } catch (error) {
+    next(error);
+  }
+})
 
 // POST (requires authentication)
 postsRouter.post('/', requireUser, async (req, res, next) => {
@@ -24,10 +35,9 @@ postsRouter.post('/', requireUser, async (req, res, next) => {
 
   try {
     const newPost = await prisma.post.create({
-      data: { title, content, authorId, tags: { set: tags } }, // Create new post with tags
-      include: { author: true }, // Include author details in response
+      data: { title, content, authorId}, 
     });
-    res.status(201).json(newPost);
+    res.status(201).send(newPost);
   } catch (error) {
     next(error);
   }
@@ -42,9 +52,9 @@ postsRouter.patch('/:postId', requireUser, async (req, res, next) => {
     const updatedPost = await prisma.post.update({
       where: { id: Number(postId) },
       data: { title, content, tags: { set: tags } },
-      include: { author: true }, // Include author details in response
+      include: { author: true }, 
     });
-    res.json(updatedPost);
+    res.send(updatedPost);
   } catch (error) {
     next(error);
   }
@@ -58,7 +68,7 @@ postsRouter.delete('/:postId', requireUser, async (req, res, next) => {
     const deletedPost = await prisma.post.delete({
       where: { id: Number(postId) },
     });
-    res.json(deletedPost);
+    res.send(deletedPost);
   } catch (error) {
     next(error);
   }
